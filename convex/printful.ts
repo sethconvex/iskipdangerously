@@ -20,6 +20,9 @@ const VARIANT_IDS: Record<string, number> = {
 
 const PRINTFUL_STORE_ID = "17674040";
 
+// 24 hours in milliseconds
+const CONFIRM_DELAY_MS = 24 * 60 * 60 * 1000;
+
 async function printfulFetch(path: string, options: RequestInit = {}) {
   const res = await fetch(`${PRINTFUL_API}${path}`, {
     ...options,
@@ -37,6 +40,7 @@ async function printfulFetch(path: string, options: RequestInit = {}) {
   return res.json();
 }
 
+// Step 1: Create a draft order on Printful (no confirm), schedule confirmation in 24h
 export const createOrder = internalAction({
   args: { orderId: v.id("orders") },
   handler: async (ctx, args) => {
@@ -72,6 +76,7 @@ export const createOrder = internalAction({
     );
 
     try {
+      // Create as DRAFT (no confirm) — gives 24h chargeback window
       const result = await printfulFetch("/orders", {
         method: "POST",
         body: JSON.stringify({
@@ -85,17 +90,68 @@ export const createOrder = internalAction({
             zip: order.shippingAddress.zip,
           },
           items,
-          confirm: true,
         }),
       });
+
+      const printfulOrderId = String(result.result.id);
 
       await ctx.runMutation(internal.orders.updateStatus, {
         orderId: args.orderId,
         status: "fulfilling",
-        printfulOrderId: String(result.result.id),
+        printfulOrderId,
       });
+
+      // Schedule confirmation in 24 hours
+      await ctx.scheduler.runAfter(
+        CONFIRM_DELAY_MS,
+        internal.printful.confirmOrder,
+        { orderId: args.orderId, printfulOrderId }
+      );
+
+      console.log(
+        `Printful draft order ${printfulOrderId} created. Confirmation scheduled in 24h.`
+      );
     } catch (error) {
       console.error("Printful order creation failed:", error);
+      await ctx.runMutation(internal.orders.updateStatus, {
+        orderId: args.orderId,
+        status: "failed",
+      });
+    }
+  },
+});
+
+// Step 2: Confirm the Printful order after 24h delay
+export const confirmOrder = internalAction({
+  args: { orderId: v.id("orders"), printfulOrderId: v.string() },
+  handler: async (ctx, args) => {
+    // Check if order was cancelled/refunded during the delay
+    const order = await ctx.runQuery(internal.orders.getByIdInternal, {
+      orderId: args.orderId,
+    });
+    if (!order) return;
+
+    if (order.status === "refunded" || order.status === "failed") {
+      console.log(
+        `Order ${args.orderId} is ${order.status}, cancelling Printful order ${args.printfulOrderId}`
+      );
+      try {
+        await printfulFetch(`/orders/${args.printfulOrderId}`, {
+          method: "DELETE",
+        });
+      } catch (error) {
+        console.error("Failed to cancel Printful order:", error);
+      }
+      return;
+    }
+
+    try {
+      await printfulFetch(`/orders/${args.printfulOrderId}/confirm`, {
+        method: "POST",
+      });
+      console.log(`Printful order ${args.printfulOrderId} confirmed after 24h hold.`);
+    } catch (error) {
+      console.error("Printful order confirmation failed:", error);
       await ctx.runMutation(internal.orders.updateStatus, {
         orderId: args.orderId,
         status: "failed",
