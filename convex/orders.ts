@@ -107,6 +107,16 @@ export const getMyOrders = query({
   },
 });
 
+export const listFailed = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("orders")
+      .withIndex("by_status", (q) => q.eq("status", "failed"))
+      .collect();
+  },
+});
+
 export const findByStripeSession = internalQuery({
   args: { stripeSessionId: v.string() },
   handler: async (ctx, args) => {
