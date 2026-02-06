@@ -1,9 +1,21 @@
-// WorkOS AuthKit JWT validation
-// Once you set WORKOS_CLIENT_ID in Convex env vars, update the domain below:
-// domain: "https://api.workos.com/user_management/YOUR_CLIENT_ID"
+const clientId = process.env.WORKOS_CLIENT_ID;
 
 const authConfig = {
-  providers: [],
+  providers: [
+    {
+      type: "customJwt" as const,
+      issuer: `https://api.workos.com/`,
+      algorithm: "RS256" as const,
+      applicationID: clientId,
+      jwks: `https://api.workos.com/sso/jwks/${clientId}`,
+    },
+    {
+      type: "customJwt" as const,
+      issuer: `https://api.workos.com/user_management/${clientId}`,
+      algorithm: "RS256" as const,
+      jwks: `https://api.workos.com/sso/jwks/${clientId}`,
+    },
+  ],
 };
 
 export default authConfig;
