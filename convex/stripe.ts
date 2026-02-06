@@ -2,12 +2,13 @@
 
 import { action, internalAction } from "./_generated/server";
 import { internal, api } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 import Stripe from "stripe";
 
 type CartItem = {
   _id: string;
-  productId: string;
+  productId: Id<"products">;
   size: string;
   quantity: number;
   product: {
@@ -19,7 +20,7 @@ type CartItem = {
 
 export const createCheckoutSession = action({
   args: {},
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<string | null> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
 
@@ -49,32 +50,37 @@ export const createCheckoutSession = action({
       0
     );
 
-    const orderId = await ctx.runMutation(internal.orders.createPending, {
-      userId: user._id,
-      items: cartItems.map((item) => ({
-        productId: item.productId,
-        title: item.product!.title,
-        size: item.size,
-        quantity: item.quantity,
-        price: item.product!.price,
-      })),
-      totalAmount,
-    });
+    const orderId: Id<"orders"> = await ctx.runMutation(
+      internal.orders.createPending,
+      {
+        userId: user._id,
+        items: cartItems.map((item) => ({
+          productId: item.productId,
+          title: item.product!.title,
+          size: item.size,
+          quantity: item.quantity,
+          price: item.product!.price,
+        })),
+        totalAmount,
+      }
+    );
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const orderIdStr: string = orderId;
 
-    const session = await stripe.checkout.sessions.create({
-      line_items: lineItems,
-      mode: "payment",
-      success_url: `${appUrl}/checkout/success?orderId=${orderId}`,
-      cancel_url: `${appUrl}/cart`,
-      shipping_address_collection: {
-        allowed_countries: ["US", "CA", "GB", "AU"],
-      },
-      metadata: {
-        convexOrderId: orderId,
-      },
-    });
+    const session: Stripe.Checkout.Session =
+      await stripe.checkout.sessions.create({
+        line_items: lineItems,
+        mode: "payment",
+        success_url: `${appUrl}/checkout/success?orderId=${orderIdStr}`,
+        cancel_url: `${appUrl}/cart`,
+        shipping_address_collection: {
+          allowed_countries: ["US", "CA", "GB", "AU"],
+        },
+        metadata: {
+          convexOrderId: orderIdStr,
+        },
+      });
 
     await ctx.runMutation(internal.orders.attachStripeSession, {
       orderId,
@@ -87,7 +93,7 @@ export const createCheckoutSession = action({
 
 export const fulfillOrder = internalAction({
   args: { signature: v.string(), payload: v.string() },
-  handler: async (ctx, { signature, payload }) => {
+  handler: async (ctx, { signature, payload }): Promise<{ success: boolean }> => {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
     const event = stripe.webhooks.constructEvent(
@@ -104,7 +110,7 @@ export const fulfillOrder = internalAction({
         const shipping =
           session.collected_information?.shipping_details;
         await ctx.runMutation(internal.orders.markPaid, {
-          orderId: convexOrderId as any,
+          orderId: convexOrderId as Id<"orders">,
           shippingAddress: {
             name: shipping?.name ?? "",
             address1: shipping?.address?.line1 ?? "",
@@ -116,9 +122,8 @@ export const fulfillOrder = internalAction({
           },
         });
 
-        // Trigger Printful order creation
         await ctx.runAction(internal.printful.createOrder, {
-          orderId: convexOrderId as any,
+          orderId: convexOrderId as Id<"orders">,
         });
       }
     }

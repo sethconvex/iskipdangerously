@@ -2,6 +2,7 @@
 
 import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 
 const PRINTFUL_API = "https://api.printful.com";
@@ -33,7 +34,7 @@ export const createOrder = internalAction({
     }
 
     const items = await Promise.all(
-      order.items.map(async (item: { productId: string; quantity: number }) => {
+      order.items.map(async (item: { productId: Id<"products">; quantity: number }) => {
         const product = await ctx.runQuery(
           internal.products.getByIdInternal,
           { productId: item.productId }
