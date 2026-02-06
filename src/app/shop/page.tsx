@@ -16,10 +16,10 @@ export default function ShopPage() {
       <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">The Skip Shop</h1>
+          <h1 className="text-3xl font-bold mb-2">The Ship Shop</h1>
           <p className="text-muted-foreground">
-            Community-designed t-shirts featuring the best AI fails and wins.
-            Every shirt features our mascot: the lobster who skips dangerously.
+            Community-designed t-shirts featuring AI-generated art. Create a
+            design in the AI Studio and sell it here.
           </p>
         </div>
 

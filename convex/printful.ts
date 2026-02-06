@@ -7,6 +7,17 @@ import { v } from "convex/values";
 
 const PRINTFUL_API = "https://api.printful.com";
 
+// Bella+Canvas 3001 Unisex Jersey in Black — size → Printful variant ID
+const VARIANT_IDS: Record<string, number> = {
+  XS: 9527,
+  S: 4016,
+  M: 4017,
+  L: 4018,
+  XL: 4019,
+  "2XL": 4020,
+  "3XL": 5295,
+};
+
 async function printfulFetch(path: string, options: RequestInit = {}) {
   const res = await fetch(`${PRINTFUL_API}${path}`, {
     ...options,
@@ -34,14 +45,25 @@ export const createOrder = internalAction({
     }
 
     const items = await Promise.all(
-      order.items.map(async (item: { productId: Id<"products">; quantity: number }) => {
+      order.items.map(async (item: { productId: Id<"products">; size: string; quantity: number }) => {
         const product = await ctx.runQuery(
           internal.products.getByIdInternal,
           { productId: item.productId }
         );
+        if (!product) throw new Error(`Product ${item.productId} not found`);
+
+        const variantId = VARIANT_IDS[item.size];
+        if (!variantId) throw new Error(`Unknown size: ${item.size}`);
+
         return {
-          sync_variant_id: product?.printfulSyncProductId,
+          variant_id: variantId,
           quantity: item.quantity,
+          files: [
+            {
+              type: "front",
+              url: product.imageUrl,
+            },
+          ],
         };
       })
     );
@@ -85,8 +107,6 @@ export const handleWebhook = internalAction({
     const printfulOrderId = String(event.data?.order?.id);
     if (!printfulOrderId) return;
 
-    // Look up the order by printful order ID
-    // For now, log the event - full implementation would search orders table
     console.log(`Printful webhook: ${event.type} for order ${printfulOrderId}`);
 
     switch (event.type) {

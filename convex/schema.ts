@@ -36,8 +36,9 @@ export default defineSchema({
   products: defineTable({
     title: v.string(),
     description: v.string(),
-    imageStorageId: v.id("_storage"),
-    printfulSyncProductId: v.optional(v.string()),
+    imageStorageId: v.optional(v.id("_storage")),
+    imageUrl: v.optional(v.string()),
+    designId: v.optional(v.id("designs")),
     price: v.number(), // cents
     sizes: v.array(v.string()),
     active: v.boolean(),

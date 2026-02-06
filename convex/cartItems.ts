@@ -26,7 +26,9 @@ export const getMyCart = query({
           product: product
             ? {
                 ...product,
-                imageUrl: await ctx.storage.getUrl(product.imageStorageId),
+                imageUrl: product.imageStorageId
+                  ? await ctx.storage.getUrl(product.imageStorageId)
+                  : product.imageUrl ?? null,
               }
             : null,
         };

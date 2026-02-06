@@ -3,17 +3,26 @@
 import { fal } from "@fal-ai/client";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { Id } from "../../../convex/_generated/dataModel";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Sparkles, Loader2, Wand2 } from "lucide-react";
+import { Sparkles, Loader2, Wand2, Shirt } from "lucide-react";
+import { SHIRT_SIZES, DEFAULT_SHIRT_PRICE } from "@/lib/constants";
 
 fal.config({ proxyUrl: "/api/fal/proxy" });
 
@@ -39,7 +48,14 @@ export default function GeneratePage() {
   const startGeneration = useMutation(api.designs.startGeneration);
   const completeGeneration = useMutation(api.designs.completeGeneration);
   const failGeneration = useMutation(api.designs.failGeneration);
+  const createFromDesign = useMutation(api.products.createFromDesign);
   const designs = useQuery(api.designs.getUserDesigns);
+
+  const [publishDesignId, setPublishDesignId] = useState<Id<"designs"> | null>(
+    null
+  );
+  const [publishTitle, setPublishTitle] = useState("");
+  const [isPublishing, setIsPublishing] = useState(false);
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
@@ -81,6 +97,28 @@ export default function GeneratePage() {
     toast.success("All models finished!");
   }
 
+  async function handlePublish() {
+    if (!publishDesignId || !publishTitle.trim()) return;
+    setIsPublishing(true);
+    try {
+      await createFromDesign({
+        designId: publishDesignId,
+        title: publishTitle.trim(),
+        description:
+          "AI-generated design printed on a Bella+Canvas 3001 Unisex Jersey. 100% cotton, comfortable fit.",
+        price: DEFAULT_SHIRT_PRICE,
+        sizes: SHIRT_SIZES,
+      });
+      toast.success("T-shirt is now in the shop!");
+      setPublishDesignId(null);
+      setPublishTitle("");
+    } catch (error) {
+      toast.error("Failed to publish — are you signed in?");
+    } finally {
+      setIsPublishing(false);
+    }
+  }
+
   return (
     <>
       <Header />
@@ -90,7 +128,8 @@ export default function GeneratePage() {
           <h1 className="text-3xl font-bold mb-2">AI Design Studio</h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
             Describe a t-shirt design and our AI will generate it across 4
-            models so you can compare. Every design features our lobster mascot.
+            models so you can compare. Pick your favorite and sell it in the
+            shop.
           </p>
         </div>
 
@@ -188,11 +227,81 @@ export default function GeneratePage() {
                   </div>
                 )}
                 <CardContent className="pt-3 pb-3">
-                  {design.model && (
-                    <Badge variant="secondary" className="mb-1.5">
-                      {design.model}
-                    </Badge>
-                  )}
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    {design.model && (
+                      <Badge variant="secondary">{design.model}</Badge>
+                    )}
+                    {design.status === "complete" && design.imageUrl && (
+                      <Dialog
+                        open={publishDesignId === design._id}
+                        onOpenChange={(open) => {
+                          if (open) {
+                            setPublishDesignId(design._id);
+                            setPublishTitle("");
+                          } else {
+                            setPublishDesignId(null);
+                          }
+                        }}
+                      >
+                        <DialogTrigger asChild>
+                          <Button size="sm" variant="outline" className="gap-1 h-7 text-xs">
+                            <Shirt className="h-3 w-3" />
+                            Sell
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Sell as T-Shirt</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <img
+                              src={design.imageUrl}
+                              alt={design.prompt}
+                              className="w-full max-h-64 object-contain rounded-lg"
+                            />
+                            <div className="space-y-2">
+                              <Label htmlFor="title">T-Shirt Name</Label>
+                              <Input
+                                id="title"
+                                placeholder="e.g. Lobster Hacker Tee"
+                                value={publishTitle}
+                                onChange={(e) =>
+                                  setPublishTitle(e.target.value)
+                                }
+                                maxLength={100}
+                              />
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              <p>
+                                Price: $
+                                {(DEFAULT_SHIRT_PRICE / 100).toFixed(2)}
+                              </p>
+                              <p>
+                                Sizes: {SHIRT_SIZES.join(", ")}
+                              </p>
+                              <p>
+                                Printed on Bella+Canvas 3001 Unisex Jersey
+                              </p>
+                            </div>
+                            <Button
+                              onClick={handlePublish}
+                              disabled={
+                                isPublishing || !publishTitle.trim()
+                              }
+                              className="w-full gap-2"
+                            >
+                              {isPublishing ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Shirt className="h-4 w-4" />
+                              )}
+                              Add to Shop
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground line-clamp-2">
                     {design.prompt}
                   </p>
