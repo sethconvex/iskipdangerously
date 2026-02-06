@@ -4,36 +4,34 @@ import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
 import { AuthLoading, Authenticated, Unauthenticated } from "convex/react";
 import {
   useAuth,
+  useAccessToken,
   AuthKitProvider,
 } from "@workos-inc/authkit-nextjs/components";
 import { ReactNode, useCallback, useMemo } from "react";
 
-const convex = new ConvexReactClient(
-  process.env.NEXT_PUBLIC_CONVEX_URL!
-);
+const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 function useConvexAuth() {
-  const { user, isLoading, getAccessToken } = useAuth();
+  const { user, loading } = useAuth();
+  const { accessToken, loading: tokenLoading, refresh } = useAccessToken();
 
   const fetchAccessToken = useCallback(
     async ({ forceRefreshToken }: { forceRefreshToken: boolean }) => {
-      try {
-        const token = await getAccessToken();
-        return token ?? null;
-      } catch {
-        return null;
+      if (forceRefreshToken) {
+        await refresh();
       }
+      return accessToken ?? null;
     },
-    [getAccessToken]
+    [accessToken, refresh]
   );
 
   return useMemo(
     () => ({
-      isLoading,
+      isLoading: loading || tokenLoading,
       isAuthenticated: !!user,
       fetchAccessToken,
     }),
-    [isLoading, user, fetchAccessToken]
+    [loading, tokenLoading, user, fetchAccessToken]
   );
 }
 

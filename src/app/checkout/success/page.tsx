@@ -8,11 +8,19 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { CheckCircle } from "lucide-react";
 import Link from "next/link";
 
 export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-16 text-center">Loading...</div>}>
+      <CheckoutSuccessContent />
+    </Suspense>
+  );
+}
+
+function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
   const order = useQuery(

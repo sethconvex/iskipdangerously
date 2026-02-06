@@ -17,7 +17,7 @@ import { LogIn, User, ShoppingBag, Sparkles, LogOut } from "lucide-react";
 import Link from "next/link";
 
 export function AuthButton() {
-  const { user, isLoading, signIn, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const getOrCreateUser = useMutation(api.users.getOrCreateUser);
   const currentUser = useQuery(api.users.currentUser);
 
@@ -27,7 +27,7 @@ export function AuthButton() {
     }
   }, [user, currentUser, getOrCreateUser]);
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Button variant="ghost" size="sm" disabled>
         Loading...
@@ -37,9 +37,11 @@ export function AuthButton() {
 
   if (!user) {
     return (
-      <Button onClick={() => signIn()} size="sm" className="gap-2">
-        <LogIn className="h-4 w-4" />
-        Sign In
+      <Button asChild size="sm" className="gap-2">
+        <Link href="/signin">
+          <LogIn className="h-4 w-4" />
+          Sign In
+        </Link>
       </Button>
     );
   }

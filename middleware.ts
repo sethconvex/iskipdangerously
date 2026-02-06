@@ -11,6 +11,7 @@ export default authkitMiddleware({
       "/shop",
       "/shop/(.*)",
       "/auth/(.*)",
+      "/signin",
       "/api/(.*)",
     ],
   },

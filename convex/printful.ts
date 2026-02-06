@@ -33,7 +33,7 @@ export const createOrder = internalAction({
     }
 
     const items = await Promise.all(
-      order.items.map(async (item) => {
+      order.items.map(async (item: { productId: string; quantity: number }) => {
         const product = await ctx.runQuery(
           internal.products.getByIdInternal,
           { productId: item.productId }

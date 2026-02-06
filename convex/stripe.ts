@@ -5,6 +5,18 @@ import { internal, api } from "./_generated/api";
 import { v } from "convex/values";
 import Stripe from "stripe";
 
+type CartItem = {
+  _id: string;
+  productId: string;
+  size: string;
+  quantity: number;
+  product: {
+    title: string;
+    price: number;
+    imageUrl: string | null;
+  } | null;
+};
+
 export const createCheckoutSession = action({
   args: {},
   handler: async (ctx) => {
@@ -14,7 +26,7 @@ export const createCheckoutSession = action({
     const user = await ctx.runQuery(api.users.currentUser);
     if (!user) throw new Error("User not found");
 
-    const cartItems = await ctx.runQuery(api.cartItems.getMyCart);
+    const cartItems: CartItem[] = await ctx.runQuery(api.cartItems.getMyCart);
     if (!cartItems.length) throw new Error("Cart is empty");
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -89,16 +101,18 @@ export const fulfillOrder = internalAction({
       const convexOrderId = session.metadata?.convexOrderId;
 
       if (convexOrderId) {
+        const shipping =
+          session.collected_information?.shipping_details;
         await ctx.runMutation(internal.orders.markPaid, {
           orderId: convexOrderId as any,
           shippingAddress: {
-            name: session.shipping_details?.name ?? "",
-            address1: session.shipping_details?.address?.line1 ?? "",
-            address2: session.shipping_details?.address?.line2 ?? undefined,
-            city: session.shipping_details?.address?.city ?? "",
-            stateCode: session.shipping_details?.address?.state ?? "",
-            countryCode: session.shipping_details?.address?.country ?? "",
-            zip: session.shipping_details?.address?.postal_code ?? "",
+            name: shipping?.name ?? "",
+            address1: shipping?.address?.line1 ?? "",
+            address2: shipping?.address?.line2 ?? undefined,
+            city: shipping?.address?.city ?? "",
+            stateCode: shipping?.address?.state ?? "",
+            countryCode: shipping?.address?.country ?? "",
+            zip: shipping?.address?.postal_code ?? "",
           },
         });
 
