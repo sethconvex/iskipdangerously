@@ -1,5 +1,14 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
+
+async function getPostImageUrl(
+  ctx: { storage: { getUrl: (id: string) => Promise<string | null> } },
+  post: { imageStorageId?: string; imageUrl?: string }
+) {
+  if (post.imageStorageId) return await ctx.storage.getUrl(post.imageStorageId);
+  return post.imageUrl ?? null;
+}
 
 export const list = query({
   args: {
@@ -19,11 +28,10 @@ export const list = query({
 
     return Promise.all(
       posts.map(async (post) => {
-        const imageUrl = await ctx.storage.getUrl(post.imageStorageId);
-        const user = await ctx.db.get(post.userId) ;
+        const user = await ctx.db.get(post.userId);
         return {
           ...post,
-          imageUrl,
+          imageUrl: await getPostImageUrl(ctx, post),
           authorName: user?.name ?? "Unknown",
           authorAvatar: user?.avatarUrl,
         };
@@ -43,10 +51,10 @@ export const trending = query({
 
     return Promise.all(
       top.map(async (post) => {
-        const user = await ctx.db.get(post.userId) ;
+        const user = await ctx.db.get(post.userId);
         return {
           ...post,
-          imageUrl: await ctx.storage.getUrl(post.imageStorageId),
+          imageUrl: await getPostImageUrl(ctx, post),
           authorName: user?.name ?? "Unknown",
           authorAvatar: user?.avatarUrl,
         };
@@ -66,10 +74,10 @@ export const featured = query({
 
     return Promise.all(
       top.map(async (post) => {
-        const user = await ctx.db.get(post.userId) ;
+        const user = await ctx.db.get(post.userId);
         return {
           ...post,
-          imageUrl: await ctx.storage.getUrl(post.imageStorageId),
+          imageUrl: await getPostImageUrl(ctx, post),
           authorName: user?.name ?? "Unknown",
           authorAvatar: user?.avatarUrl,
         };
@@ -83,11 +91,10 @@ export const getById = query({
   handler: async (ctx, args) => {
     const post = await ctx.db.get(args.postId);
     if (!post) return null;
-    const imageUrl = await ctx.storage.getUrl(post.imageStorageId);
-    const user = await ctx.db.get(post.userId) ;
+    const user = await ctx.db.get(post.userId);
     return {
       ...post,
-      imageUrl,
+      imageUrl: await getPostImageUrl(ctx, post),
       authorName: user?.name ?? "Unknown",
       authorAvatar: user?.avatarUrl,
     };
@@ -106,7 +113,7 @@ export const getByUserId = query({
     return Promise.all(
       posts.map(async (post) => ({
         ...post,
-        imageUrl: await ctx.storage.getUrl(post.imageStorageId),
+        imageUrl: await getPostImageUrl(ctx, post),
       }))
     );
   },
@@ -114,7 +121,6 @@ export const getByUserId = query({
 
 export const create = mutation({
   args: {
-    imageStorageId: v.id("_storage"),
     title: v.string(),
     description: v.optional(v.string()),
     category: v.union(v.literal("win"), v.literal("sin")),
@@ -129,23 +135,30 @@ export const create = mutation({
       .unique();
     if (!user) throw new Error("User not found");
 
-    return await ctx.db.insert("posts", {
+    const postId = await ctx.db.insert("posts", {
       userId: user._id,
-      imageStorageId: args.imageStorageId,
       title: args.title,
       description: args.description,
       category: args.category,
       winCount: 0,
       sinCount: 0,
     });
+
+    // Auto-generate an image for this post
+    await ctx.scheduler.runAfter(0, internal.generatePostImage.generate, {
+      postId,
+      title: args.title,
+      description: args.description,
+      category: args.category,
+    });
+
+    return postId;
   },
 });
 
-export const generateUploadUrl = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-    return await ctx.storage.generateUploadUrl();
+export const attachImage = internalMutation({
+  args: { postId: v.id("posts"), imageUrl: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.postId, { imageUrl: args.imageUrl });
   },
 });

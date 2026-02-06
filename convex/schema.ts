@@ -14,7 +14,8 @@ export default defineSchema({
 
   posts: defineTable({
     userId: v.id("users"),
-    imageStorageId: v.id("_storage"),
+    imageStorageId: v.optional(v.id("_storage")),
+    imageUrl: v.optional(v.string()),
     title: v.string(),
     description: v.optional(v.string()),
     category: v.union(v.literal("win"), v.literal("sin")),

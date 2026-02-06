@@ -109,7 +109,9 @@ export const getUserVotes = query({
           post: post
             ? {
                 ...post,
-                imageUrl: await ctx.storage.getUrl(post.imageStorageId),
+                imageUrl: post.imageStorageId
+                  ? await ctx.storage.getUrl(post.imageStorageId)
+                  : post.imageUrl ?? null,
               }
             : null,
         };
