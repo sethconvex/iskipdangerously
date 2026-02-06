@@ -31,8 +31,8 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-20 md:py-32 text-center">
           <div className="text-7xl md:text-9xl mb-6">🦞</div>
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-4">
-            Ship{" "}
-            <span className="text-orange-500">Dangerously</span>
+            Dangerously{" "}
+            <span className="text-orange-500">Ship</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
             AI did something amazing? That&apos;s a <strong>Win</strong>. AI did
@@ -89,7 +89,7 @@ export default function HomePage() {
             <h3 className="font-semibold text-lg mb-2">3. Wear It</h3>
             <p className="text-sm text-muted-foreground">
               The best posts become t-shirts. Rock the lobster. Skip
-              dangerously.
+              dangerously. Dangerously ship.
             </p>
           </div>
         </div>

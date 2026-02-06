@@ -1,4 +1,4 @@
-# Ship Dangerously
+# Dangerously Ship
 
 Community site for AI wins ("Skips") and fails ("Sins"). Users post images, vote, and buy t-shirts.
 
