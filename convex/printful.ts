@@ -18,12 +18,15 @@ const VARIANT_IDS: Record<string, number> = {
   "3XL": 5295,
 };
 
+const PRINTFUL_STORE_ID = "17674040";
+
 async function printfulFetch(path: string, options: RequestInit = {}) {
   const res = await fetch(`${PRINTFUL_API}${path}`, {
     ...options,
     headers: {
       Authorization: `Bearer ${process.env.PRINTFUL_API_KEY}`,
       "Content-Type": "application/json",
+      "X-PF-Store-Id": PRINTFUL_STORE_ID,
       ...options.headers,
     },
   });

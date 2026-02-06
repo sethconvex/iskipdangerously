@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { ThumbsUp, ThumbsDown, Package } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 function MyPosts({ userId }: { userId: string }) {
   const posts = useQuery(api.posts.getByUserId, { userId: userId as any });
@@ -183,6 +184,8 @@ function MyOrders() {
 
 export default function ProfilePage() {
   const user = useQuery(api.users.currentUser);
+  const searchParams = useSearchParams();
+  const defaultTab = searchParams.get("tab") ?? "posts";
 
   return (
     <>
@@ -215,7 +218,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <Tabs defaultValue="posts">
+            <Tabs defaultValue={defaultTab}>
               <TabsList className="mb-6">
                 <TabsTrigger value="posts">My Posts</TabsTrigger>
                 <TabsTrigger value="votes">My Votes</TabsTrigger>
