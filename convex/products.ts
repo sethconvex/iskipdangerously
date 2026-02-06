@@ -21,7 +21,7 @@ export const listActive = query({
 export const getById = query({
   args: { productId: v.id("products") },
   handler: async (ctx, args) => {
-    const product = await ctx.db.get(args.productId);
+    const product = await ctx.db.get(args.productId) ;
     if (!product) return null;
     return {
       ...product,
@@ -33,7 +33,7 @@ export const getById = query({
 export const getByIdInternal = internalQuery({
   args: { productId: v.id("products") },
   handler: async (ctx, args) => {
-    const product = await ctx.db.get(args.productId);
+    const product = await ctx.db.get(args.productId) ;
     if (!product) return null;
     return {
       ...product,

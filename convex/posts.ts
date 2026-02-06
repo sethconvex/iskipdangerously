@@ -20,7 +20,7 @@ export const list = query({
     return Promise.all(
       posts.map(async (post) => {
         const imageUrl = await ctx.storage.getUrl(post.imageStorageId);
-        const user = await ctx.db.get(post.userId);
+        const user = await ctx.db.get(post.userId) ;
         return {
           ...post,
           imageUrl,
@@ -42,12 +42,15 @@ export const trending = query({
     const top = sorted.slice(0, 20);
 
     return Promise.all(
-      top.map(async (post) => ({
-        ...post,
-        imageUrl: await ctx.storage.getUrl(post.imageStorageId),
-        authorName: (await ctx.db.get(post.userId))?.name ?? "Unknown",
-        authorAvatar: (await ctx.db.get(post.userId))?.avatarUrl,
-      }))
+      top.map(async (post) => {
+        const user = await ctx.db.get(post.userId) ;
+        return {
+          ...post,
+          imageUrl: await ctx.storage.getUrl(post.imageStorageId),
+          authorName: user?.name ?? "Unknown",
+          authorAvatar: user?.avatarUrl,
+        };
+      })
     );
   },
 });
@@ -62,12 +65,15 @@ export const featured = query({
     const top = sorted.slice(0, 6);
 
     return Promise.all(
-      top.map(async (post) => ({
-        ...post,
-        imageUrl: await ctx.storage.getUrl(post.imageStorageId),
-        authorName: (await ctx.db.get(post.userId))?.name ?? "Unknown",
-        authorAvatar: (await ctx.db.get(post.userId))?.avatarUrl,
-      }))
+      top.map(async (post) => {
+        const user = await ctx.db.get(post.userId) ;
+        return {
+          ...post,
+          imageUrl: await ctx.storage.getUrl(post.imageStorageId),
+          authorName: user?.name ?? "Unknown",
+          authorAvatar: user?.avatarUrl,
+        };
+      })
     );
   },
 });
@@ -78,7 +84,7 @@ export const getById = query({
     const post = await ctx.db.get(args.postId);
     if (!post) return null;
     const imageUrl = await ctx.storage.getUrl(post.imageStorageId);
-    const user = await ctx.db.get(post.userId);
+    const user = await ctx.db.get(post.userId) ;
     return {
       ...post,
       imageUrl,

@@ -23,7 +23,7 @@ export const castVote = mutation({
       )
       .unique();
 
-    const post = await ctx.db.get(args.postId);
+    const post = await ctx.db.get(args.postId) ;
     if (!post) throw new Error("Post not found");
 
     if (existingVote) {
@@ -103,7 +103,7 @@ export const getUserVotes = query({
 
     return Promise.all(
       votes.map(async (vote) => {
-        const post = await ctx.db.get(vote.postId);
+        const post = await ctx.db.get(vote.postId) ;
         return {
           ...vote,
           post: post

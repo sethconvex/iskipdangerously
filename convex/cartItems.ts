@@ -20,7 +20,7 @@ export const getMyCart = query({
 
     return Promise.all(
       items.map(async (item) => {
-        const product = await ctx.db.get(item.productId);
+        const product = await ctx.db.get(item.productId) ;
         return {
           ...item,
           product: product

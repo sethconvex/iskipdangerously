@@ -1,10 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  typescript: {
-    // Convex files are type-checked separately by `npx convex dev`
-    ignoreBuildErrors: true,
-  },
   images: {
     remotePatterns: [
       {
