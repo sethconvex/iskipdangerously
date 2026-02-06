@@ -11,20 +11,9 @@ async function getPostImageUrl(
 }
 
 export const list = query({
-  args: {
-    category: v.optional(v.union(v.literal("win"), v.literal("sin"))),
-  },
-  handler: async (ctx, args) => {
-    let posts;
-    if (args.category) {
-      posts = await ctx.db
-        .query("posts")
-        .withIndex("by_category", (q) => q.eq("category", args.category!))
-        .order("desc")
-        .take(50);
-    } else {
-      posts = await ctx.db.query("posts").order("desc").take(50);
-    }
+  args: {},
+  handler: async (ctx) => {
+    const posts = await ctx.db.query("posts").order("desc").take(50);
 
     return Promise.all(
       posts.map(async (post) => {
@@ -123,7 +112,6 @@ export const create = mutation({
   args: {
     title: v.string(),
     description: v.optional(v.string()),
-    category: v.union(v.literal("win"), v.literal("sin")),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -139,7 +127,6 @@ export const create = mutation({
       userId: user._id,
       title: args.title,
       description: args.description,
-      category: args.category,
       winCount: 0,
       sinCount: 0,
     });
@@ -149,7 +136,6 @@ export const create = mutation({
       postId,
       title: args.title,
       description: args.description,
-      category: args.category,
     });
 
     return postId;

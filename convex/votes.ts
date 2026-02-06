@@ -83,6 +83,31 @@ export const getUserVoteForPost = query({
   },
 });
 
+export const getUserVotesMap = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return {};
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_workosId", (q) => q.eq("workosId", identity.subject))
+      .unique();
+    if (!user) return {};
+
+    const votes = await ctx.db
+      .query("votes")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .collect();
+
+    const map: Record<string, "win" | "sin"> = {};
+    for (const vote of votes) {
+      map[vote.postId] = vote.voteType;
+    }
+    return map;
+  },
+});
+
 export const getUserVotes = query({
   args: {},
   handler: async (ctx) => {

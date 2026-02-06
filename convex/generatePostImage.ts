@@ -9,16 +9,31 @@ export const generate = internalAction({
     postId: v.id("posts"),
     title: v.string(),
     description: v.optional(v.string()),
-    category: v.union(v.literal("win"), v.literal("sin")),
   },
   handler: async (ctx, args) => {
-    const categoryLabel = args.category === "win" ? "amazing success" : "hilarious failure";
-    const desc = args.description ? ` Context: ${args.description}` : "";
+    // Check rate limit
+    const { ok, retryAfter } = await ctx.runMutation(
+      internal.generatePostImageHelpers.checkRateLimit
+    );
+    if (!ok) {
+      console.log(
+        `Rate limited for post ${args.postId}, retrying in ${retryAfter}ms`
+      );
+      await ctx.scheduler.runAfter(
+        retryAfter,
+        internal.generatePostImage.generate,
+        args
+      );
+      return;
+    }
 
-    const prompt = `Editorial illustration for a story about an AI ${categoryLabel}: "${args.title}".${desc} Bold graphic style, vibrant colors, include a red lobster character reacting to the scene. White background.`;
+    const desc = args.description ? ` ${args.description}` : "";
+
+    const prompt = `Bold graphic t-shirt design, screen-print style with clean lines and limited vibrant colors. Subject: "${args.title}".${desc} Feature a cool cartoon red lobster character as the central figure. Style: streetwear aesthetic, meme-worthy, would go viral on social media. Text on design: "I SKIP DANGEROUSLY". White background, isolated design ready for printing.`;
 
     try {
-      const res = await fetch("https://queue.fal.run/fal-ai/flux/dev", {
+      // Use synchronous fal.ai endpoint (rate limiter handles throttling)
+      const res = await fetch("https://fal.run/fal-ai/flux/dev", {
         method: "POST",
         headers: {
           Authorization: `Key ${process.env.FAL_KEY}`,
@@ -31,64 +46,37 @@ export const generate = internalAction({
         }),
       });
 
+      const responseText = await res.text();
+      let data: any;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error(
+          `fal.ai returned non-JSON (HTTP ${res.status}): ${responseText.slice(0, 500)}`
+        );
+      }
+
       if (!res.ok) {
-        // queue.fal.run returns a request ID for async processing
-        const data = await res.json();
-        const requestId = data.request_id;
+        throw new Error(`fal.ai error ${res.status}: ${JSON.stringify(data)}`);
+      }
 
-        if (requestId) {
-          // Poll for result
-          let imageUrl: string | null = null;
-          for (let i = 0; i < 60; i++) {
-            await new Promise((r) => setTimeout(r, 3000));
-
-            const statusRes = await fetch(
-              `https://queue.fal.run/fal-ai/flux/dev/requests/${requestId}/status`,
-              {
-                headers: { Authorization: `Key ${process.env.FAL_KEY}` },
-              }
-            );
-            const statusData = await statusRes.json();
-
-            if (statusData.status === "COMPLETED") {
-              const resultRes = await fetch(
-                `https://queue.fal.run/fal-ai/flux/dev/requests/${requestId}`,
-                {
-                  headers: { Authorization: `Key ${process.env.FAL_KEY}` },
-                }
-              );
-              const resultData = await resultRes.json();
-              imageUrl = resultData.images?.[0]?.url;
-              break;
-            } else if (statusData.status === "FAILED") {
-              throw new Error("fal.ai generation failed");
-            }
-          }
-
-          if (imageUrl) {
-            await ctx.runMutation(internal.posts.attachImage, {
-              postId: args.postId,
-              imageUrl,
-            });
-            console.log(`Generated image for post ${args.postId}`);
-          }
-        } else {
-          throw new Error(`fal.ai error: ${res.status}`);
-        }
+      const imageUrl = data.images?.[0]?.url;
+      if (imageUrl) {
+        await ctx.runMutation(internal.posts.attachImage, {
+          postId: args.postId,
+          imageUrl,
+        });
+        console.log(`Generated image for post ${args.postId}`);
       } else {
-        // Synchronous response
-        const data = await res.json();
-        const imageUrl = data.images?.[0]?.url;
-        if (imageUrl) {
-          await ctx.runMutation(internal.posts.attachImage, {
-            postId: args.postId,
-            imageUrl,
-          });
-          console.log(`Generated image for post ${args.postId}`);
-        }
+        console.error(
+          `No image in fal.ai response for post ${args.postId}: ${JSON.stringify(data).slice(0, 500)}`
+        );
       }
     } catch (error) {
-      console.error(`Image generation failed for post ${args.postId}:`, error);
+      console.error(
+        `Image generation failed for post ${args.postId}:`,
+        error
+      );
     }
   },
 });

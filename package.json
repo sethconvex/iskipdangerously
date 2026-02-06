@@ -11,8 +11,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@convex-dev/rate-limiter": "^0.3.2",
     "@fal-ai/client": "^1.9.0",
     "@fal-ai/server-proxy": "^1.2.0",
+    "@radix-ui/react-popover": "^1.1.15",
     "@stripe/stripe-js": "^8.7.0",
     "@workos-inc/authkit-nextjs": "^2.13.0",
     "class-variance-authority": "^0.7.1",

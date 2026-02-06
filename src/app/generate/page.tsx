@@ -62,7 +62,7 @@ export default function GeneratePage() {
     if (!prompt.trim()) return;
     setIsGenerating(true);
 
-    const fullPrompt = `T-shirt design, bold graphic illustration style, vibrant colors, suitable for screen printing on a t-shirt: ${prompt.trim()}. Include a red lobster character as the mascot. White background.`;
+    const fullPrompt = `Bold graphic t-shirt design, streetwear aesthetic, clean lines, limited vibrant color palette, screen-print ready: ${prompt.trim()}. Feature a cool cartoon red lobster character. Meme-worthy and viral. Text: "I SKIP DANGEROUSLY". White background, isolated design.`;
 
     const generations = MODELS.map(async (model) => {
       let designId;

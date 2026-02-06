@@ -18,7 +18,7 @@ export default defineSchema({
     imageUrl: v.optional(v.string()),
     title: v.string(),
     description: v.optional(v.string()),
-    category: v.union(v.literal("win"), v.literal("sin")),
+    category: v.optional(v.union(v.literal("win"), v.literal("sin"))),
     winCount: v.number(),
     sinCount: v.number(),
   })
@@ -40,10 +40,13 @@ export default defineSchema({
     imageStorageId: v.optional(v.id("_storage")),
     imageUrl: v.optional(v.string()),
     designId: v.optional(v.id("designs")),
+    postId: v.optional(v.id("posts")),
     price: v.number(), // cents
     sizes: v.array(v.string()),
     active: v.boolean(),
-  }).index("by_active", ["active"]),
+  })
+    .index("by_active", ["active"])
+    .index("by_postId", ["postId"]),
 
   cartItems: defineTable({
     userId: v.id("users"),

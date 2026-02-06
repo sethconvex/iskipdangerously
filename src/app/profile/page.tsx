@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { ThumbsUp, ThumbsDown, Package } from "lucide-react";
+import { Package } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 function MyPosts({ userId }: { userId: string }) {
@@ -52,18 +52,18 @@ function MyPosts({ userId }: { userId: string }) {
                 {post.title}
               </h3>
               <Badge
-                variant={post.category === "win" ? "default" : "destructive"}
+                variant={post.winCount >= post.sinCount ? "default" : "destructive"}
                 className="mt-1"
               >
-                {post.category === "win" ? "Win" : "Sin"}
+                {post.winCount >= post.sinCount ? "Win" : "Sin"}
               </Badge>
             </CardContent>
             <CardFooter className="text-sm text-muted-foreground pt-0 pb-3 flex gap-4">
               <span className="flex items-center gap-1">
-                <ThumbsUp className="h-3.5 w-3.5" /> {post.winCount}
+                🏆 {post.winCount}
               </span>
               <span className="flex items-center gap-1">
-                <ThumbsDown className="h-3.5 w-3.5" /> {post.sinCount}
+                😈 {post.sinCount}
               </span>
             </CardFooter>
           </Card>

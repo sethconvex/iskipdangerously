@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams } from "next/navigation";
-import { ThumbsUp, ThumbsDown, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -69,14 +69,18 @@ export default function PostPage() {
                   alt={post.title}
                   className="w-full rounded-lg"
                 />
-                <Badge
-                  className="absolute top-4 right-4 text-sm px-3 py-1"
-                  variant={
-                    post.category === "win" ? "default" : "destructive"
-                  }
-                >
-                  {post.category === "win" ? "Win" : "Sin"}
-                </Badge>
+                {(post.winCount > 0 || post.sinCount > 0) && (
+                  <Badge
+                    className="absolute top-4 right-4 text-sm px-3 py-1"
+                    variant={
+                      post.winCount >= post.sinCount
+                        ? "default"
+                        : "destructive"
+                    }
+                  >
+                    {post.winCount >= post.sinCount ? "Win" : "Sin"}
+                  </Badge>
+                )}
               </div>
             )}
 
@@ -96,29 +100,36 @@ export default function PostPage() {
               </div>
 
               {/* Vote buttons */}
-              <div className="flex gap-3">
-                <Button
-                  variant={
-                    userVote?.voteType === "win" ? "default" : "outline"
-                  }
-                  size="lg"
-                  className="gap-2 min-w-[100px]"
-                  onClick={() => handleVote("win")}
-                >
-                  <ThumbsUp className="h-5 w-5" />
-                  <span className="font-bold">{post.winCount}</span>
-                </Button>
-                <Button
-                  variant={
-                    userVote?.voteType === "sin" ? "destructive" : "outline"
-                  }
-                  size="lg"
-                  className="gap-2 min-w-[100px]"
-                  onClick={() => handleVote("sin")}
-                >
-                  <ThumbsDown className="h-5 w-5" />
-                  <span className="font-bold">{post.sinCount}</span>
-                </Button>
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Cast your verdict
+                </p>
+                <div className="flex gap-3">
+                  <Button
+                    variant={
+                      userVote?.voteType === "win" ? "default" : "outline"
+                    }
+                    size="lg"
+                    className="gap-2 min-w-[120px]"
+                    onClick={() => handleVote("win")}
+                  >
+                    <span className="text-lg">🏆</span>
+                    Win
+                    <span className="font-bold">({post.winCount})</span>
+                  </Button>
+                  <Button
+                    variant={
+                      userVote?.voteType === "sin" ? "destructive" : "outline"
+                    }
+                    size="lg"
+                    className="gap-2 min-w-[120px]"
+                    onClick={() => handleVote("sin")}
+                  >
+                    <span className="text-lg">😈</span>
+                    Sin
+                    <span className="font-bold">({post.sinCount})</span>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

@@ -107,6 +107,71 @@ export const createFromDesign = mutation({
   },
 });
 
+export const createFromPost = mutation({
+  args: {
+    postId: v.id("posts"),
+    size: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_workosId", (q) => q.eq("workosId", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+
+    const post = await ctx.db.get(args.postId);
+    if (!post) throw new Error("Post not found");
+
+    const imageUrl = post.imageStorageId
+      ? await ctx.storage.getUrl(post.imageStorageId)
+      : post.imageUrl;
+    if (!imageUrl) throw new Error("Post has no image yet");
+
+    // Check if product already exists for this post
+    let product = await ctx.db
+      .query("products")
+      .withIndex("by_postId", (q) => q.eq("postId", args.postId))
+      .unique();
+
+    if (!product) {
+      const productId = await ctx.db.insert("products", {
+        title: post.title,
+        description: `"${post.title}" — AI Win or Sin, printed on a Bella+Canvas 3001 Unisex Jersey. 100% cotton.`,
+        imageUrl,
+        postId: args.postId,
+        price: 2999,
+        sizes: ["XS", "S", "M", "L", "XL", "2XL", "3XL"],
+        active: true,
+      });
+      product = (await ctx.db.get(productId))!;
+    }
+
+    // Add to cart directly
+    const existing = await ctx.db
+      .query("cartItems")
+      .withIndex("by_userId_productId_size", (q) =>
+        q.eq("userId", user._id).eq("productId", product!._id).eq("size", args.size)
+      )
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { quantity: existing.quantity + 1 });
+    } else {
+      await ctx.db.insert("cartItems", {
+        userId: user._id,
+        productId: product._id,
+        size: args.size,
+        quantity: 1,
+      });
+    }
+
+    return product._id;
+  },
+});
+
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {

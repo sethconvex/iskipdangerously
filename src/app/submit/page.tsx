@@ -8,13 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -27,7 +20,6 @@ export default function SubmitPage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<"win" | "sin">("win");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -42,7 +34,6 @@ export default function SubmitPage() {
       const postId = await createPost({
         title: title.trim(),
         description: description.trim() || undefined,
-        category,
       });
 
       toast.success("Post submitted!");
@@ -61,7 +52,7 @@ export default function SubmitPage() {
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <h1 className="text-3xl font-bold mb-2">Submit a Post</h1>
         <p className="text-muted-foreground mb-8">
-          Share an AI win or sin with the community.
+          Share something wild AI did. The community will vote: Win or Sin?
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -89,26 +80,6 @@ export default function SubmitPage() {
                   maxLength={500}
                   rows={3}
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <Select
-                  value={category}
-                  onValueChange={(v) => setCategory(v as "win" | "sin")}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="win">
-                      Win — AI did something amazing
-                    </SelectItem>
-                    <SelectItem value="sin">
-                      Sin — AI did something horrible
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               <Button
