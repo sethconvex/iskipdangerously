@@ -16,13 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "I Skip Dangerously — AI Wins & Sins",
+  title: "Ship Dangerously — AI Wins & Sins",
   description:
-    "Post AI fails and wins. Vote on the best. Buy the t-shirt. Featuring our mascot: the lobster who skips dangerously.",
+    "Post AI fails and wins. Vote on the best. Buy the t-shirt. Featuring our mascot: the lobster who ships dangerously.",
   openGraph: {
-    title: "I Skip Dangerously",
+    title: "Ship Dangerously",
     description: "AI Wins & Sins — Community curated, lobster approved.",
-    siteName: "I Skip Dangerously",
+    siteName: "Ship Dangerously",
   },
 };
 

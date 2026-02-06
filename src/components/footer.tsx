@@ -7,7 +7,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <h3 className="font-bold text-lg flex items-center gap-2">
-              <span className="text-xl">🦞</span> I Skip Dangerously
+              <span className="text-xl">🦞</span> Ship Dangerously
             </h3>
             <p className="text-sm text-muted-foreground mt-2">
               The community for AI wins and sins. Vote, share, and wear the
@@ -55,14 +55,13 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-3 text-sm">Domains</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>iskipdangerously.com</li>
-              <li>skipdangerously.com</li>
+              <li>shipdangerously.com</li>
             </ul>
           </div>
         </div>
 
         <div className="mt-8 pt-4 border-t text-center text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} I Skip Dangerously. All rights
+          &copy; {new Date().getFullYear()} Ship Dangerously. All rights
           reserved. 🦞
         </div>
       </div>

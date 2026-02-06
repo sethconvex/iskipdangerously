@@ -31,7 +31,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-20 md:py-32 text-center">
           <div className="text-7xl md:text-9xl mb-6">🦞</div>
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-4">
-            I Skip{" "}
+            Ship{" "}
             <span className="text-orange-500">Dangerously</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
