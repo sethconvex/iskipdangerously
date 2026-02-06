@@ -2,7 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const startGeneration = mutation({
-  args: { prompt: v.string() },
+  args: { prompt: v.string(), model: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
@@ -16,6 +16,7 @@ export const startGeneration = mutation({
     return await ctx.db.insert("designs", {
       userId: user._id,
       prompt: args.prompt,
+      model: args.model,
       status: "generating",
     });
   },

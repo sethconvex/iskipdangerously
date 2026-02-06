@@ -94,6 +94,7 @@ export default defineSchema({
   designs: defineTable({
     userId: v.id("users"),
     prompt: v.string(),
+    model: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
     imageStorageId: v.optional(v.id("_storage")),
     status: v.union(
